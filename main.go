@@ -8,7 +8,7 @@ import (
 )
 
 func execute(bf string) string {
-	cursor := 0
+	var cursor uint8
 	var output bytes.Buffer
 	arr := make([]byte, 1000)
 	
