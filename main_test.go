@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBrainfuck(t *testing.T) {
+func TestBF(t *testing.T) {
 	expected := "Hello World!\n"
 	bfCode := "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
 
@@ -13,3 +13,10 @@ func TestBrainfuck(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
+func TestBFNestedLoop(t *testing.T) {
+	expected := ""
+	bfCode := "[-----[>]>>[<<<+++>>>[-]]"
+
+	actual := execute(bfCode)
+	require.Equal(t, expected, actual)
+}
