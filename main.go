@@ -7,25 +7,38 @@ import (
 	"bytes"
 )
 
-type Jump struct {
-	jpm_type string
-	position uint16
+type action int
+
+const (
+	Increment action = iota
+	Decrement
+	Next
+	Back
+	Print
+	Read
+	StartLoop
+	EndLoop
+)
+
+type Token struct {
+	name   action
+	jumpTo int
 }
 
 func execute(bf string) string {
-	var cursor uint16
+	var cursor byte
 	var output bytes.Buffer
-	jump_stack := createJumpStack(bf)
+	tokens := tokenizer(bf)
 	arr := make([]byte, 65535)
 	
 	for i := 0; i < len(bf); i++ {
-		switch bf[i] {
-		case '+': arr[cursor] += 1
-		case '-': arr[cursor] -= 1
-		case '>': cursor += 1
-		case '<': cursor -= 1
-		case '.': output.WriteString(string(byte(arr[cursor])))
-		case ',': 
+		switch tokens[i].name {
+		case Increment: arr[cursor] += 1
+		case Decrement: arr[cursor] -= 1
+		case Next: cursor += 1
+		case Back: cursor -= 1
+		case Print: output.WriteString(string(arr[cursor]))
+		case Read:
 			var input byte
 			_, err := fmt.Scanf("%c", &input)
 			if err != nil {
@@ -33,41 +46,51 @@ func execute(bf string) string {
 			}
 			arr[cursor] = input
 
-		case '[':
+		case StartLoop:
 			if arr[cursor] == 0 {
-				i = int(jump_stack[i].position)
+				i = int(tokens[i].jumpTo)
 			}
-		case ']':
+		case EndLoop:
 			if arr[cursor] != 0 {
-				i = int(jump_stack[i].position)
+				i = int(tokens[i].jumpTo)
 			} 
 		}
 	}
 	return output.String()
 }
 
-func createJumpStack(bf string) (jumps []Jump) {
-	var pointer uint16
-	jump_stack := make([]uint16, 0)
+func tokenizer(bf string) (tokens []Token) {
+	var pointer int
+	jumpStack := make([]int, 0)
 	for i := 0; i < len(bf); i++ {
 		switch bf[i] {
-		case '>', '<', '+', '-', '.', ',':
-			jumps = append(jumps, Jump{"", 0})
+		case '+':
+			tokens = append(tokens, Token{Increment, 0})
+		case '-':
+			tokens = append(tokens, Token{Decrement, 0})
+		case '>':
+			tokens = append(tokens, Token{Next, 0})
+		case '<':
+			tokens = append(tokens, Token{Back, 0})
+		case '.':
+			tokens = append(tokens, Token{Print, 0})
+		case ',':
+			tokens = append(tokens, Token{Read, 0})
 		case '[':
-			jumps = append(jumps, Jump{"[", 0})
-			jump_stack = append(jump_stack, uint16(i))
+			tokens = append(tokens, Token{StartLoop, 0})
+			jumpStack = append(jumpStack, i)
 		case ']':
-			if len(jump_stack) == 0 {
+			if len(jumpStack) == 0 {
 				return nil
 			}
-			pointer = jump_stack[len(jump_stack)-1]
-			jump_stack = jump_stack[:len(jump_stack)-1]
-			jumps = append(jumps, Jump{"]", pointer})
-			jumps[pointer].position = uint16(i)
+			pointer = jumpStack[len(jumpStack)-1]
+			jumpStack = jumpStack[:len(jumpStack)-1]
+			tokens = append(tokens, Token{EndLoop, pointer})
+			tokens[pointer].jumpTo = i
 		}
 	
 	}
-	return jumps
+	return tokens
 }
 
 func main() {
