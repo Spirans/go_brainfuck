@@ -29,7 +29,7 @@ func execute(bf string) string {
 	var cursor byte
 	var output bytes.Buffer
 	tokens := tokenizer(bf)
-	arr := make([]byte, 65535)
+	arr := make([]byte, len(bf))
 	
 	for i := 0; i < len(bf); i++ {
 		switch tokens[i].name {
