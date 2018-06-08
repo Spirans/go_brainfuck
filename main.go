@@ -20,6 +20,8 @@ const (
 	EndLoop
 )
 
+const DEFAULT_ARRAY_SIZE = 10
+
 type Token struct {
 	name   action
 	jumpTo int
@@ -29,13 +31,19 @@ func execute(bf string) string {
 	var cursor byte
 	var output bytes.Buffer
 	tokens := tokenizer(bf)
-	arr := make([]byte, len(bf))
+	arr := make([]byte, DEFAULT_ARRAY_SIZE)
 	
-	for i := 0; i < len(bf); i++ {
+	for i := 0; i < len(tokens); i++ {
 		switch tokens[i].name {
 		case Increment: arr[cursor] += 1
 		case Decrement: arr[cursor] -= 1
-		case Next: cursor += 1
+		case Next:
+			if int(cursor) >= len(arr) {
+				increasedArray := make([]byte, len(arr)*2)
+				copy(increasedArray, arr)
+				arr = increasedArray
+			}
+			cursor += 1
 		case Back: cursor -= 1
 		case Print: output.WriteString(string(arr[cursor]))
 		case Read:
@@ -81,7 +89,7 @@ func tokenizer(bf string) (tokens []Token) {
 			jumpStack = append(jumpStack, i)
 		case ']':
 			if len(jumpStack) == 0 {
-				return nil
+				panic("wrong loop")
 			}
 			pointer = jumpStack[len(jumpStack)-1]
 			jumpStack = jumpStack[:len(jumpStack)-1]
